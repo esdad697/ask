@@ -294,59 +294,6 @@ uint8_t CC1100::receive(void)
 }
 //-------------------------------[end]------------------------------------------
 
-//------------[enables WOR Mode  EVENT0 ~1890ms; rx_timeout ~235ms]--------------------
-void CC1100::wor_enable()
-{
-/*
-    EVENT1 = WORCTRL[6:4] -> Datasheet page 88
-    EVENT0 = (750/Xtal)*(WOREVT1<<8+WOREVT0)*2^(5*WOR_RES) = (750/26Meg)*65407*2^(5*0) = 1.89s
-
-                        (WOR_RES=0;RX_TIME=0)               -> Datasheet page 80
-i.E RX_TIMEOUT = EVENT0*       (3.6038)      *26/26Meg = 235.8ms
-                        (WOR_RES=0;RX_TIME=1)               -> Datasheet page 80
-i.E.RX_TIMEOUT = EVENT0*       (1.8029)      *26/26Meg = 117.9ms
-*/
-    sidle();
-
-    spi_write_register(MCSM0, 0x18);    //FS Autocalibration
-    spi_write_register(MCSM2, 0x01);    //MCSM2.RX_TIME = 1b
-
-    // configure EVENT0 time
-    spi_write_register(WOREVT1, 0xFF);  //High byte Event0 timeout
-    spi_write_register(WOREVT0, 0x7F);  //Low byte Event0 timeout
-
-    // configure EVENT1 time
-    spi_write_register(WORCTRL, 0x78);  //WOR_RES=0b; tEVENT1=0111b=48d -> 48*(750/26MHz)= 1.385ms
-
-    spi_write_strobe(SFRX);             //flush RX buffer
-    spi_write_strobe(SWORRST);          //resets the WOR timer to the programmed Event 1
-    spi_write_strobe(SWOR);             //put the radio in WOR mode when CSn is released
-
-    delayMicroseconds(100);
-}
-//-------------------------------[end]------------------------------------------
-
-//------------------------[disable WOR Mode]-------------------------------------
-void CC1100::wor_disable()
-{
-    sidle();                            //exit WOR Mode
-    spi_write_register(MCSM2, 0x07);    //stay in RX. No RX timeout
-}
-//-------------------------------[end]------------------------------------------
-
-//------------------------[resets WOR Timer]------------------------------------
-void CC1100::wor_reset()
-{
-    sidle();                            //go to IDLE
-    spi_write_register(MCSM2, 0x01);    //MCSM2.RX_TIME = 1b
-    spi_write_strobe(SFRX);             //flush RX buffer
-    spi_write_strobe(SWORRST);          //resets the WOR timer to the programmed Event 1
-    spi_write_strobe(SWOR);             //put the radio in WOR mode when CSn is released
-
-    delayMicroseconds(100);
-}
-//-------------------------------[end]------------------------------------------
-
 //-------------------------[tx_payload_burst]-----------------------------------
 uint8_t CC1100::tx_payload_burst(uint8_t my_addr, uint8_t rx_addr,
                               uint8_t *txbuffer, uint8_t length)
@@ -598,88 +545,6 @@ void CC1100::set_mode(uint8_t mode)
 }
 //------------------------------------------end]-----------------------------------
 
-//--------------------------[set frequency]-------------------------------------
-void CC1100::set_patable(uint8_t *patable_arr)
-{
-    spi_write_burst(PATABLE_BURST,patable_arr,8);   //writes output power settings to cc1100    "104us"
-}
-//-------------------------------[end]------------------------------------------
-
-//-------[set Modulation type 2-FSK=0; GFSK=1; ASK/OOK=3; 4-FSK=4; MSK=7]------
-void CC1100::set_modulation_type(uint8_t cfg)
-{
-    uint8_t data;
-    data = spi_read_register(MDMCFG2);
-    data = (data & 0x8F) | (((cfg) << 4) & 0x70);
-    spi_write_register(MDMCFG2, data);
-    //printf("MDMCFG2: 0x%02X\n", data);
-}
-//-------------------------------[end]-----------------------------------------
-
-//------------------------[set preamble Len]-----------------------------------
-void CC1100::set_preamble_len(uint8_t cfg)
-{
-    uint8_t data;
-    data = spi_read_register(MDMCFG1);
-    data = (data & 0x8F) | (((cfg) << 4) & 0x70);
-    spi_write_register(MDMCFG1, data);
-    //printf("MDMCFG2: 0x%02X\n", data);
-}
-//-------------------------------[end]-----------------------------------------
-
-//-------------------[set modem datarate and deviant]--------------------------
-void CC1100::set_datarate(uint8_t mdmcfg4, uint8_t mdmcfg3, uint8_t deviant)
-{
-    spi_write_register(MDMCFG4, mdmcfg4);
-    spi_write_register(MDMCFG3, mdmcfg3);
-    spi_write_register(DEVIATN, deviant);
-}
-//-------------------------------[end]-----------------------------------------
-
-//----------------------[set sync mode no sync=0;]-----------------------------
-void CC1100::set_sync_mode(uint8_t cfg) // 0=no sync word; 1,2 = 16bit sync word, 3= 32bit sync word
-{
-    uint8_t data;
-    data = spi_read_register(MDMCFG2);
-    data = (data & 0xF8) | (cfg & 0x07);
-    spi_write_register(MDMCFG2, data);
-    //printf("MDMCFG2: 0x%02X\n", data);
-}
-//-------------------------------[end]-----------------------------------------
-
-//---------------[set FEC ON=TRUE; OFF=FALSE]----------------------------------
-void CC1100::set_fec(uint8_t cfg)
-{
-    uint8_t data;
-    data = spi_read_register(MDMCFG1);
-    data = (data & 0x7F) | (((cfg) << 7) & 0x80);
-    spi_write_register(MDMCFG1, data);
-    printf("MDMCFG1: 0x%02X\n", data);
-}
-//-------------------------------[end]------------------------------------------
-
-//---------------[set data_whitening ON=TRUE; OFF=FALSE]------------------------
-void CC1100::set_data_whitening(uint8_t cfg)
-{
-    uint8_t data;
-    data = spi_read_register(PKTCTRL0);
-    data = (data & 0xBF) | (((cfg) << 6) & 0x40);
-    spi_write_register(PKTCTRL0, data);
-    //printf("PKTCTRL0: 0x%02X\n", data);
-}
-//-------------------------------[end]-----------------------------------------
-
-//------------[set manchester encoding ON=TRUE; OFF=FALSE]---------------------
-void CC1100::set_manchester_encoding(uint8_t cfg)
-{
-    uint8_t data;
-    data = spi_read_register(MDMCFG2);
-    data = (data & 0xF7) | (((cfg) << 3) & 0x08);
-    spi_write_register(MDMCFG2, data);
-    //printf("MDMCFG2: 0x%02X\n", data);
-}
-//-------------------------------[end]------------------------------------------
-
 //--------------------------[rssi_convert]--------------------------------------
 int8_t CC1100::rssi_convert(uint8_t Rssi_hex)
 {
@@ -712,43 +577,6 @@ uint8_t CC1100::check_crc(uint8_t lqi)
 {
     return (lqi & 0x80);
 }
-//-------------------------------[end]------------------------------------------
-
-/*
-//----------------------------[get temp]----------------------------------------
-uint8_t CC1100::get_temp(uint8_t *ptemp_Arr)
-{
-    const uint8_t num_samples = 8;
-    uint16_t adc_result = 0;
-    uint32_t temperature = 0;
-
-    sidle();                              //sets CC1100 into IDLE
-    spi_write_register(PTEST,0xBF);       //enable temp sensor
-    delay(50);                            //wait a bit
-
-    for(uint8_t i=0;i<num_samples;i++)    //sampling analog temperature value
-    {
-        adc_result += analogRead(GDO0);
-        delay(1);
-    }
-    adc_result = adc_result / num_samples;
-    //Serial.println(adc_result);
-
-    temperature = (adc_result * CC1100_TEMP_ADC_MV) / CC1100_TEMP_CELS_CO;
-
-    ptemp_Arr[0] = temperature / 10;      //cut last digit
-    ptemp_Arr[1] = temperature % 10;      //isolate last digit
-
-    if(debug_level > 0){
-        Serial.print(F("Temp:"));Serial.print(ptemp_Arr[0]);Serial.print(F("."));Serial.println(ptemp_Arr[1]);
-    }
-
-    spi_write_register(PTEST,0x7F);       //writes 0x7F back to PTest (app. note)
-
-    receive();
-    return (*ptemp_Arr);
-}
-*/
 //-------------------------------[end]------------------------------------------
 
 //|==================== SPI Initialisation for CC1100 =========================|
