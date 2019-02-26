@@ -165,7 +165,7 @@ uint8_t CC1100::begin(volatile uint8_t &My_addr)
     // Tx channel 0 or 1 is Rx by channel 1
 
     //set output power amplifier
-    set_output_power_level(0);            //set PA to 0dBm as default
+    // 0 is 0x04
 
     //set my receiver address
     set_myaddr(My_addr);                  //My_Addr from EEPROM to global variable
@@ -647,24 +647,6 @@ void CC1100::set_mode(uint8_t mode)
 void CC1100::set_patable(uint8_t *patable_arr)
 {
     spi_write_burst(PATABLE_BURST,patable_arr,8);   //writes output power settings to cc1100    "104us"
-}
-//-------------------------------[end]------------------------------------------
-
-//-------------------------[set output power]-----------------------------------
-void CC1100::set_output_power_level(int8_t dBm)
-{
-    uint8_t pa = 0xC0;
-
-    if      (dBm <= -30) pa = 0x00;
-    else if (dBm <= -20) pa = 0x01;
-    else if (dBm <= -15) pa = 0x02;
-    else if (dBm <= -10) pa = 0x03;
-    else if (dBm <= 0)   pa = 0x04;
-    else if (dBm <= 5)   pa = 0x05;
-    else if (dBm <= 7)   pa = 0x06;
-    else if (dBm <= 10)  pa = 0x07;
-
-    spi_write_register(FREND0,pa);
 }
 //-------------------------------[end]------------------------------------------
 
