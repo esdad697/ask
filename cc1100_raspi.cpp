@@ -414,42 +414,9 @@ uint8_t CC1100::sent_packet(uint8_t my_addr, uint8_t rx_addr, uint8_t *txbuffer,
         return FALSE;
     }
 
-    do                                                          //sent package out with retries
-    {
-        tx_payload_burst(my_addr, rx_addr, txbuffer, pktlen);   //loads the data in cc1100 buffer
-        transmit();                                             //sents data over air
-        receive();                                              //receive mode
-
-        if(rx_addr == BROADCAST_ADDRESS){                       //no wait acknowledge if sent to broadcast address or tx_retries = 0
-            return TRUE;                                        //successful sent to BROADCAST_ADDRESS
-        }
-
-        while (ackWaitCounter < ACK_TIMEOUT )                   //wait for an acknowledge
-        {
-            if (packet_available() == TRUE)                     //if RF package received check package acknowge
-            {
-                from_sender = rx_addr;                          //the original message sender address
-                rx_fifo_erase(rxbuffer);                        //erase RX software buffer
-                rx_payload_burst(rxbuffer, pktlen_ack);         //reads package in buffer
-                check_acknowledge(rxbuffer, pktlen_ack, from_sender, my_addr); //check if received message is an acknowledge from client
-                return TRUE;                                    //package successfully sent
-            }
-            else{
-                ackWaitCounter++;                               //increment ACK wait counter
-                delay(1);                                       //delay to give receiver time
-            }
-        }
-
-        ackWaitCounter = 0;                                     //resets the ACK_Timeout
-        tx_retries_count++;                                     //increase tx retry counter
-
-        if(debug_level > 0){                                    //debug output messages
-            printf(" #:");
-            printf("0x%02X \r\n", tx_retries_count);
-        }
-    }while(tx_retries_count <= tx_retries);                     //while count of retries is reaches
-
-    return FALSE;                                               //sent failed. too many retries
+    tx_payload_burst(my_addr, rx_addr, txbuffer, pktlen);   //loads the data in cc1100 buffer
+    transmit();                                             //sents data over air
+    receive();                                              //receive mode
 }
 //-------------------------------[end]------------------------------------------
 
@@ -522,10 +489,6 @@ uint8_t CC1100::get_payload(uint8_t rxbuffer[], uint8_t &pktlen, uint8_t &my_add
             crc = check_crc(lqi);                          //get packet CRC
 
             if(debug_level > 0){                           //debug output messages
-                if(rxbuffer[1] == BROADCAST_ADDRESS)       //if my receiver address is BROADCAST_ADDRESS
-                {
-                    printf("BROADCAST message\r\n");
-                }
 
                 printf("RX_FIFO:");
                 for(uint8_t i = 0 ; i < pktlen + 1; i++)   //showes rx_buffer for debug
@@ -539,14 +502,6 @@ uint8_t CC1100::get_payload(uint8_t rxbuffer[], uint8_t &pktlen, uint8_t &my_add
                 printf("LQI:");printf("0x%02X ", lqi);
                 printf("CRC:");printf("0x%02X ", crc);
                 printf("\r\n");
-            }
-
-            my_addr = rxbuffer[1];                         //set receiver address to my_addr
-            sender = rxbuffer[2];                          //set from_sender address
-
-            if(my_addr != BROADCAST_ADDRESS)               //send only ack if no BROADCAST_ADDRESS
-            {
-                sent_acknowledge(my_addr, sender);           //sending acknowlage to sender!
             }
 
             return TRUE;
