@@ -21,7 +21,7 @@ uint8_t My_addr, Tx_addr, Rx_addr, Pktlen, pktlen, Lqi, Rssi;
 uint8_t rx_addr,sender,lqi;
  int8_t rssi_dbm;
 
-int cc1100_freq_select, cc1100_mode_select, cc1100_channel_select;
+int cc1100_channel_select;
 
 uint32_t prev_millis_1s_timer = 0;
 
@@ -40,9 +40,6 @@ int main(int argc, char *argv[]) {
 	My_addr = 1;
 	rx_demo_addr = 3; // Addr of receiver. Ignored in broadcast mode.
 	interval = 3000;
-	cc1100_channel_select = 1;
-	cc1100_freq_select = 2;
-	cc1100_mode_select = 3;
 
 	//------------- welcome message ------------------------
 	printf("Raspberry CC1101 SPI Library test\n");
