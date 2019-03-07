@@ -20,7 +20,6 @@ uint8_t rx_addr,sender,lqi;
  int8_t rssi_dbm;
 
 
-int cc1100_freq_select, cc1100_mode_select, cc1100_channel_select;
 uint8_t cc1100_debug = 0;								//set CC1100 lib in no-debug output mode
 
 CC1100 cc1100;
@@ -31,9 +30,6 @@ CC1100 cc1100;
 int main(int argc, char *argv[]) {
 	cc1100_debug = 1;
 	My_addr = 3;
-	cc1100_channel_select = 1;
-	cc1100_freq_select = 2;
-	cc1100_mode_select = 3;
 
 	//------------- welcome message ------------------------
 	printf("Raspberry CC1101 SPI Library test\n");
