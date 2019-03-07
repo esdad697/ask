@@ -123,7 +123,6 @@ uint8_t CC1100::get_debug_level(void)
 uint8_t CC1100::begin(volatile uint8_t &My_addr)
 {
     uint8_t partnum, version;
-    extern int cc1100_freq_select, cc1100_mode_select, cc1100_channel_select;
 
     pinMode(GDO0, INPUT);                 //setup AVR GPIO ports
     pinMode(GDO2, INPUT);
@@ -160,12 +159,6 @@ uint8_t CC1100::begin(volatile uint8_t &My_addr)
 
     spi_write_burst(WRITE_BURST,STUDIO_REGISTERS,CFG_REGISTER);
     spi_write_burst(PATABLE_BURST,PATABLE_POWER,8);
-
-    // Channel does not seem important
-    // Tx channel 0 or 1 is Rx by channel 1
-
-    //set output power amplifier
-    // 0 is 0x04
 
     //set my receiver address
     set_myaddr(My_addr);                  //My_Addr from EEPROM to global variable
@@ -223,11 +216,7 @@ void CC1100::show_register_settings(void)
 void CC1100::show_main_settings(void)
 {
      extern volatile uint8_t My_addr;
-     extern int cc1100_mode_select, cc1100_freq_select, cc1100_channel_select;
 
-     printf("Mode: %d\r\n", cc1100_mode_select);
-     printf("Frequency: %d\r\n", cc1100_freq_select);
-     printf("Channel: %d\r\n", cc1100_channel_select);
      printf("My_Addr: %d\r\n", My_addr);
 }
 //-------------------------------[end]------------------------------------------
@@ -397,7 +386,7 @@ uint8_t CC1100::packet_available()
         }
 
         if(debug_level > 0){
-             //printf("Pkt->:\r\n");
+             printf("Pkt->:\r\n");
         }
 
         return TRUE;
