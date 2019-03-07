@@ -1,2 +1,2 @@
-sudo g++ -lwiringPi RX_Demo.cpp cc1100_raspi.cpp -o RX_Demo
-sudo g++ -lwiringPi TX_Demo.cpp cc1100_raspi.cpp -o TX_Demo
+sudo g++ -lwiringPi rx.cpp cc1100_raspi.cpp -o rx
+sudo g++ -lwiringPi tx.cpp cc1100_raspi.cpp -o tx

@@ -1,2 +1,2 @@
-sudo ./TX_Demo
+sudo ./tx
 

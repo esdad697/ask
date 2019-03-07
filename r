@@ -1,1 +1,1 @@
-sudo ./RX_Demo
+sudo ./rx
