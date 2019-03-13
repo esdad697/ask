@@ -20,9 +20,9 @@ extern uint8_t cc1100_debug;
 static uint8_t PATABLE_POWER[8] = {0x00,0x51,0x00,0x00,0x00,0x00,0x00,0x00};
 
 static uint8_t STUDIO_REGISTERS[CFG_REGISTER] = {
-                    0x07,  // IOCFG2        GDO2 Output Pin Configuration
+                    0x06,  // IOCFG2        GDO2 Output Pin Configuration
                     0x2E,  // IOCFG1        GDO1 Output Pin Configuration
-                    0x80,  // IOCFG0        GDO0 Output Pin Configuration
+                    0x06,  // IOCFG0        GDO0 Output Pin Configuration
     0x47,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
     0xD3,  // SYNC1               Sync Word, High Byte
     0x91,  // SYNC0               Sync Word, Low Byte
@@ -353,6 +353,7 @@ uint8_t CC1100::sent_packet(uint8_t my_addr, uint8_t rx_addr, uint8_t *txbuffer,
     tx_payload_burst(my_addr, rx_addr, txbuffer, pktlen);   //loads the data in cc1100 buffer
     transmit();                                             //sents data over air
     receive();                                              //receive mode
+    return TRUE;
 }
 //-------------------------------[end]------------------------------------------
 
@@ -381,12 +382,12 @@ uint8_t CC1100::packet_available()
         if(spi_read_register(IOCFG2) == 0x06)               //if sync word detect mode is used
         {
             while(digitalRead(GDO2) == TRUE){               //wait till sync word is fully received
-                printf("!\r\n");
+                ;//printf("!\r\n");
             }                                                  //for sync word receive
         }
 
         if(debug_level > 0){
-             printf("Pkt->:\r\n");
+            printf("Pkt->:\r\n");
         }
 
         return TRUE;
@@ -410,40 +411,36 @@ uint8_t CC1100::get_payload(uint8_t rxbuffer[], uint8_t &pktlen, uint8_t &my_add
     }
     else
     {
+        printf("RX\r\n");
+        //return TRUE;
+        
         my_addr = rxbuffer[1];                             //set receiver address to my_addr
         sender = rxbuffer[2];
 
-        if(check_acknowledge(rxbuffer, pktlen, sender, my_addr) == TRUE) //acknowlage received?
-        {
-            rx_fifo_erase(rxbuffer);                       //delete rx_fifo bufffer
-            return FALSE;                                //Ack received -> finished
-        }
-        else                                               //real data, and sent acknowladge
-        {
-            rssi_dbm = rssi_convert(rxbuffer[pktlen + 1]); //converts receiver strength to dBm
-            lqi = lqi_convert(rxbuffer[pktlen + 2]);       //get rf quialtiy indicator
-            crc = check_crc(lqi);                          //get packet CRC
+        rssi_dbm = rssi_convert(rxbuffer[pktlen + 1]); //converts receiver strength to dBm
+        lqi = lqi_convert(rxbuffer[pktlen + 2]);       //get rf quialtiy indicator
+        crc = check_crc(lqi);                          //get packet CRC
 
-            if(debug_level > 0){                           //debug output messages
+        
+        if(debug_level > 0){                           //debug output messages
 
-                printf("RX_FIFO:");
-                for(uint8_t i = 0 ; i < pktlen + 1; i++)   //showes rx_buffer for debug
-                {
-                    printf("0x%02X ", rxbuffer[i]);
-                }
-                printf("| 0x%02X 0x%02X |", rxbuffer[pktlen+1], rxbuffer[pktlen+2]);
-                printf("\r\n");
-
-                printf("RSSI:%d ", rssi_dbm);
-                printf("LQI:");printf("0x%02X ", lqi);
-                printf("CRC:");printf("0x%02X ", crc);
-                printf("\r\n");
+            printf("RX_FIFO:");
+            for(uint8_t i = 0 ; i < pktlen + 1; i++)   //showes rx_buffer for debug
+            {
+                printf("0x%02X ", rxbuffer[i]);
             }
+            printf("| 0x%02X 0x%02X |", rxbuffer[pktlen+1], rxbuffer[pktlen+2]);
+            printf("\r\n");
 
-            return TRUE;
+            printf("RSSI:%d ", rssi_dbm);
+            printf("LQI:");printf("0x%02X ", lqi);
+            printf("CRC:");printf("0x%02X ", crc);
+            printf("\r\n");
         }
-        return FALSE;
+        
+     return TRUE;
     }
+
 }
 //-------------------------------[end]------------------------------------------
 
