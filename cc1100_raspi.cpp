@@ -43,7 +43,7 @@ static uint8_t STUDIO_REGISTERS[CFG_REGISTER] = {
     0xF8,  // MDMCFG0             Modem Configuration
     0x15,  // DEVIATN             Modem Deviation Setting
     0x07,  // MCSM2               Main Radio Control State Machine Configuration
-    0x30,  // MCSM1               Main Radio Control State Machine Configuration
+    0x0C,  // MCSM1               Main Radio Control State Machine Configuration
     0x18,  // MCSM0               Main Radio Control State Machine Configuration
     0x14,  // FOCCFG              Frequency Offset Compensation Configuration
     0x6C,  // BSCFG               Bit Synchronization Configuration
